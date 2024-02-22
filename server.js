@@ -208,7 +208,7 @@ function init() {
               departments.forEach((department) => { 
                 console.log('department:', department); 
                 console.log('reading depts', departments);
-                
+
                 if (department.department_name === answers.department_id) { 
                   departmentId = department.id; 
                 } 
@@ -236,6 +236,31 @@ function init() {
     } // Add closing parenthesis and semicolon here
 
     function addEmployees() {
+      const roleChoices = []; 
+      const managerChoices = [];
+      let managers;
+      let roles;
+      db.query(`SELECT employees.first_name, employees.last_name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`), (err, rows) => {
+        if (err) {
+          console.log(err);
+          return;
+      }
+      console.table(rows);
+    };
+        
+      db.query(`SELECT * FROM role`, (err, rows) => { 
+        if (err) { 
+          console.log(err); 
+          return; 
+        } 
+
+        roles = rows; 
+        console.log('roles:', roles);
+        for (let i = 0; i < rows.length; i++) { 
+          roleChoices.push(rows[i].title); 
+        } 
+       // console.log(departmentChoices);
+      });  
       console.log('add employees')
        inquirer.prompt([ 
         {
@@ -249,9 +274,10 @@ function init() {
           message: 'Enter the last name of the employee'
         },
         {
-          type: 'input',
+          type: 'list',
           name: 'role_id',
-          message: 'Enter the role id for the employee'
+          message: 'choose the role',
+          choices: roleChoices
         },
         {
           type: 'input',
@@ -259,8 +285,16 @@ function init() {
           message: 'Enter the manager id for the employee'
         }
       ]).then((answers) => { 
+        let roleId;
+        let managerId;
+        
+        roles.forEach((role) => {
+          if (role.title === answers.role_id) {
+            roleId = role.id;
+          }
+        });
         const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
-        const params = [answers.first_name, answers.last_name, answers.role_id, answers.manager_id];
+        const params = [answers.first_name, answers.last_name, roleId, managerId];
         
         db.query(sql, params, (err, result) => {
           if (err) {
@@ -274,6 +308,8 @@ function init() {
     }
 
       function updateEmployees() {
+        
+      
         console.log('update Employees') 
         const sql = `SELECT * FROM employees`; 
         db.query(sql, (err, rows) => {
