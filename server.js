@@ -165,7 +165,24 @@ function init() {
       });
     } 
 
-    function addRoles() {
+    function addRoles() { 
+      const departmentChoices = []; 
+      let departments 
+      db.query(`SELECT * FROM department`, (err, rows) => { 
+        if (err) { 
+          console.log(err); 
+          return; 
+        } 
+
+        departments = rows; 
+        console.log('departments:', departments);
+        for (let i = 0; i < rows.length; i++) { 
+          departmentChoices.push(rows[i].department_name); 
+        } 
+       // console.log(departmentChoices);
+      }); 
+
+            console.log('checking depts', departments)
       console.log('add roles') 
       inquirer.prompt([
         {
@@ -179,24 +196,44 @@ function init() {
           message: 'Enter the salary for the role'
         },
         {
-          type: 'input',
+          type: 'list',
           name: 'department_id',
-          message: 'Enter the department id for the role'
+          message: 'choose the department', 
+          choices: departmentChoices
         }
-      ]).then((answers) => {
-        const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
-        const params = [answers.title, answers.salary, answers.department_id];
-        
-        db.query(sql, params, (err, result) => {
-          if (err) {
-            console.log(err);
-            return;
-          }
-          console.log('Role added');
-          init();
-        });
+      ]).then((answers) => { 
+       // const department = answers.department_id.find(row => row.department_name === answers.department_id);
+          let departmentId;  
+
+              departments.forEach((department) => { 
+                console.log('department:', department); 
+                console.log('reading depts', departments);
+                
+                if (department.department_name === answers.department_id) { 
+                  departmentId = department.id; 
+                } 
+              });
+       // if (department) {
+         //   const departmentId = department.id;
+         //   console.log('Department ID:', departmentId);
+       // } else {
+         //   console.log('Department not found.');
+        //}
+      
+
+      const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
+      const params = [answers.title, answers.salary, departmentId];
+      
+      db.query(sql, params, (err, result) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        console.log('Role added');
+        init();
       });
-    } 
+      });
+    } // Add closing parenthesis and semicolon here
 
     function addEmployees() {
       console.log('add employees')
@@ -233,18 +270,18 @@ function init() {
           console.log('Employee added');
           init();
         });
-      })
+      });
     }
 
-    function updateEmployees() {
-      console.log('update Employees') 
-      const sql = `SELECT * FROM employees`; 
-      db.query(sql, (err, rows) => {
-        if (err) {
-          console.log(err);
-          return;
-        }
-        console.table(rows); });
+      function updateEmployees() {
+        console.log('update Employees') 
+        const sql = `SELECT * FROM employees`; 
+        db.query(sql, (err, rows) => {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          console.table(rows); });
         inquirer.prompt([
           {
             type: 'input',
