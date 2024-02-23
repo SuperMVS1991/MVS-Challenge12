@@ -241,7 +241,7 @@ function init() {
       
       let managers;
       let roles;
-      db.query(`SELECT employees.first_name, employees.last_name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
+      db.query(`SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
         if (err) {
           console.log(err);
           return;
@@ -298,10 +298,11 @@ function init() {
         managers.forEach((manager) => { 
 
           console.log('manager:', manager.manager); 
-          console.log(manager);
-    //      if (manager.manager === answers.manager_id) {
-      //      managerId = manager.id;
-        //  }
+          console.log('answers:', answers.manager_id);
+          if (manager.name === answers.manager_id) {
+            managerId = manager.id; 
+            console.log('managerId:', managerId);
+          }
         });
         roles.forEach((role) => {
           if (role.title === answers.role_id) {
@@ -323,35 +324,81 @@ function init() {
     }
 
       function updateEmployees() {
-        
-      
-        console.log('update Employees') 
-        const sql = `SELECT * FROM employees`; 
-        db.query(sql, (err, rows) => {
-          if (err) {
-            console.log(err);
-            return;
-          }
-          console.table(rows); });
+        const employeeChoices = [];
+        const roleChoices = [];
+        let roles; 
+        let employees; 
+
+      db.query(`SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
+        if (err) {
+          console.log(err);
+          return;
+      }
+      employees = rows; 
+
+
+    
+    
+      for(let i = 0; i < rows.length; i++) { 
+        employeeChoices.push(rows[i].name);  
+       }
+    });
+           console.log('employeeChoices:', employeeChoices);
+      db.query(`SELECT * FROM role`, (err, rows) => { 
+        if (err) { 
+          console.log(err); 
+          return; 
+        } 
+
+        roles = rows; 
+        for (let i = 0; i < rows.length; i++) { 
+          roleChoices.push(rows[i].title); 
+        } 
+       // console.log(departmentChoices);
+      });  
         inquirer.prompt([
           {
-            type: 'input',
+            type: 'list',
             name: 'employee_id',
-            message: 'Enter the id of the employee you want to update'
+            message: 'which employee do you want to update?', 
+            choices: employeeChoices
           },
           {
-            type: 'input',
+            type: 'list',
             name: 'role_id',
-            message: 'Enter the new role id for the employee'
+            message: 'which role do you want to update the employee to?',
+            choices: roleChoices
           }, 
           {
-            type: 'input', 
+            type: 'list', 
             name: 'manager_id', 
-            message: 'Enter the new manager id for the employee'
+            message: 'which manager do you want to update the employee to?',
+            choices: employeeChoices
           }
         ]).then((answers) => {
+
+          let roleId;
+        let managerId; 
+        let employeeId; 
+
+        employees.forEach((employee) => { 
+
+
+          if (employee.name === answers.employee_id) {
+            employeeId = employee.id;
+          }
+
+          if (employee.name === answers.manager_id) {
+            managerId = employee.id; 
+          }
+        });
+        roles.forEach((role) => {
+          if (role.title === answers.role_id) {
+            roleId = role.id;
+          }
+        });
           const sql = `UPDATE employees SET role_id = ?, manager_id = ? WHERE id = ?`; 
-          const params = [answers.role_id, answers.manager_id, answers.employee_id]; 
+          const params = [roleId, managerId, employeeId]; 
           db.query(sql, params, (err, result) => {
             if (err) {
               console.log(err);
