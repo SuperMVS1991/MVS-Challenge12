@@ -238,16 +238,24 @@ function init() {
     function addEmployees() {
       const roleChoices = []; 
       const managerChoices = [];
+      
       let managers;
       let roles;
-      db.query(`SELECT employees.first_name, employees.last_name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`), (err, rows) => {
+      db.query(`SELECT employees.first_name, employees.last_name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
         if (err) {
           console.log(err);
           return;
       }
-      console.table(rows);
-    };
-        
+      managers = rows;
+      console.log('manager:', rows[0].manager);
+      console.log('managers:', managers);
+      for (let i = 0; i < rows.length; i++) {
+        managerChoices.push(rows[i].manager);
+      }
+      });
+    console.log(roleChoices, managerChoices, 'role and manager choices');
+    console.log('managerChoices:', managerChoices);
+
       db.query(`SELECT * FROM role`, (err, rows) => { 
         if (err) { 
           console.log(err); 
@@ -255,7 +263,6 @@ function init() {
         } 
 
         roles = rows; 
-        console.log('roles:', roles);
         for (let i = 0; i < rows.length; i++) { 
           roleChoices.push(rows[i].title); 
         } 
@@ -280,14 +287,22 @@ function init() {
           choices: roleChoices
         },
         {
-          type: 'input',
+          type: 'list',
           name: 'manager_id',
-          message: 'Enter the manager id for the employee'
+          message: 'choose the manager',
+          choices: managerChoices
         }
       ]).then((answers) => { 
         let roleId;
         let managerId;
-        
+        managers.forEach((manager) => { 
+
+          console.log('manager:', manager.manager); 
+          console.log(manager);
+    //      if (manager.manager === answers.manager_id) {
+      //      managerId = manager.id;
+        //  }
+        });
         roles.forEach((role) => {
           if (role.title === answers.role_id) {
             roleId = role.id;
@@ -321,16 +336,6 @@ function init() {
         inquirer.prompt([
           {
             type: 'input',
-            name: 'First_name',
-            message: 'Enter the First Name of the employee you want to update'
-          },
-          {
-            type: 'input',
-            name: 'Last_name',
-            message: 'Enter the Last Name for the employee'
-          },
-          {
-            type: 'input',
             name: 'employee_id',
             message: 'Enter the id of the employee you want to update'
           },
@@ -338,10 +343,15 @@ function init() {
             type: 'input',
             name: 'role_id',
             message: 'Enter the new role id for the employee'
+          }, 
+          {
+            type: 'input', 
+            name: 'manager_id', 
+            message: 'Enter the new manager id for the employee'
           }
         ]).then((answers) => {
-          const sql = `UPDATE employees SET role_id = ?, first_name = ?, last_name = ? WHERE id = ?`; 
-          const params = [answers.role_id, answers.First_name, answers.Last_name, answers.employee_id]; 
+          const sql = `UPDATE employees SET role_id = ?, manager_id = ? WHERE id = ?`; 
+          const params = [answers.role_id, answers.manager_id, answers.employee_id]; 
           db.query(sql, params, (err, result) => {
             if (err) {
               console.log(err);
