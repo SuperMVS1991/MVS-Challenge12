@@ -179,7 +179,7 @@ function init() {
         for (let i = 0; i < rows.length; i++) { 
           departmentChoices.push(rows[i].department_name); 
         } 
-       // console.log(departmentChoices);
+  
       }); 
 
             console.log('checking depts', departments)
@@ -201,8 +201,7 @@ function init() {
           message: 'choose the department', 
           choices: departmentChoices
         }
-      ]).then((answers) => { 
-       // const department = answers.department_id.find(row => row.department_name === answers.department_id);
+      ]).then((answers) => {
           let departmentId;  
 
               departments.forEach((department) => { 
@@ -213,12 +212,6 @@ function init() {
                   departmentId = department.id; 
                 } 
               });
-       // if (department) {
-         //   const departmentId = department.id;
-         //   console.log('Department ID:', departmentId);
-       // } else {
-         //   console.log('Department not found.');
-        //}
       
 
       const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
@@ -265,7 +258,6 @@ function init() {
         for (let i = 0; i < rows.length; i++) { 
           roleChoices.push(rows[i].title); 
         } 
-       // console.log(departmentChoices);
       });  
       console.log('add employees')
        inquirer.prompt([ 
@@ -324,7 +316,6 @@ function init() {
     }
 
       function updateEmployees() { 
-        // db.query('SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS Name, role.title, role_id FROM employees LEFT JOIN role ON role_id = role.id', function (err, result) {
       db.query(`SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS name, role.title, employees.role_id, role.id, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON role_id = role.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
         if (err) {
           console.log(err);
@@ -402,148 +393,5 @@ console.log('employees:', employees);
     }
       
 
-    
-
-
-    function updateEmployeess(){ 
-
-      db.query('SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS Name, role.title, role_id FROM employees LEFT JOIN role ON role_id = role.id', function (err, result) {
-          if (err) {
-            console.error('Error executing query:', err);
-            return;
-          }
-      
-          console.log(result); 
-          var role = result.map((item) => item.title);
-      
-        var roles = result.map((item) => {
-            return {
-              id: item.role_id,
-              title: item.title
-            };
-          });
-          console.log(roles); 
-          var employees = result.map((item) => {
-              return{
-                  id: item.id, 
-                  name: item.Name
-              }
-          });
-          console.log(employees); 
-           
-    
-          inquirer
-          .prompt([
-            {
-              type: 'list',
-              name: 'employee',
-              message: 'which employee do you want to update?', 
-              choices: employees
-            }, 
-            {
-              type: 'list',
-              name: 'role',
-              message: 'what is their new role?',
-              choices: role
-            }, 
-            {
-                type: 'list',
-                name: 'manager',
-                message: 'who is there manager now?',
-                choices: employees
-              }
-         
-          ]).then(function (answers) {
-              
-              let roleid 
-              let employeeid 
-              let managerid
-            console.log("answers-role:", answers.role); 
-            console.log()
-              for (var i = 0; i < roles.length; i++) { 
-                  
-                 if (answers.role === roles[i].title){
-                       roleid = roles[i].id 
-                       console.log("role_id", roleid)
-                 } 
-              } 
-    
-              for (var i = 0; i < employees.length; i++) { 
-                  
-                if (answers.employee === employees[i].name){
-                      employeeid = employees[i].id 
-                      console.log("employe:", employeeid)
-                } 
-             }  
-  
-             for (var i = 0; i < employees.length; i++) { 
-                  
-              if (answers.manager === employees[i].name){
-                    managerid = employees[i].id 
-                    console.log("manager:", managerid)
-              } 
-           } 
-    
-              db.query(
-                  'UPDATE employees SET role_id = ?, manager_id = ? WHERE employees.id = ?',
-                  [roleid, managerid, employeeid],
-                function (err, result) {
-                  if (err) {
-                    console.error('Error executing query:', err);
-                    return;
-                  }
-      
-                  console.log('Role added successfully!');
-                  init();
-                });
-              })
-            .catch(function (error) {
-              console.error('Error occurred during prompt:', error);
-            });
-          });
-      }
-  
-  
-  
-
-
-
-//   app.post('/api/new-movie', ({ body }, res) => {
-//     const sql = `INSERT INTO movies (movie_name)
-//       VALUES (?)`;
-//     const params = [body.movie_name];
-    
-//     db.query(sql, params, (err, result) => {
-//       if (err) {
-//         res.status(400).json({ error: err.message });
-//         return;
-//       }
-//       res.json({
-//         message: 'success',
-//         data: body
-//       });
-//     });
-//   });
-
-
 
 init();
-
-
-// GIVEN a command-line application that accepts user input
-// WHEN I start the application
-// THEN I am presented with the following options: view all departments, view all roles, view all employees, add a department, add a role, add an employee, and update an employee role
-// WHEN I choose to view all departments
-// THEN I am presented with a formatted table showing department names and department ids
-// WHEN I choose to view all roles
-// THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
-// WHEN I choose to view all employees
-// THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
-// WHEN I choose to add a department
-// THEN I am prompted to enter the name of the department and that department is added to the database
-// WHEN I choose to add a role
-// THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database
-// WHEN I choose to add an employee
-// THEN I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
-// WHEN I choose to update an employee role
-// THEN I am prompted to select an employee to update and their new role and this information is updated in the database
