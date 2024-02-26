@@ -323,39 +323,27 @@ function init() {
       });
     }
 
-      function updateEmployees() {
-        const employeeChoices = [];
-        const roleChoices = [];
-        let roles; 
-        let employees; 
-
-      db.query(`SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
+      function updateEmployees() { 
+        // db.query('SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS Name, role.title, role_id FROM employees LEFT JOIN role ON role_id = role.id', function (err, result) {
+      db.query(`SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS name, role.title, employees.role_id, role.id, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON role_id = role.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
         if (err) {
           console.log(err);
           return;
       }
+        
+      const employeeChoices = [];
+      const roleChoices = [];
+      let roles; 
+      let employees;
+    
       employees = rows; 
 
-
-    
-    
       for(let i = 0; i < rows.length; i++) { 
-        employeeChoices.push(rows[i].name);  
-       }
-    });
-           console.log('employeeChoices:', employeeChoices);
-      db.query(`SELECT * FROM role`, (err, rows) => { 
-        if (err) { 
-          console.log(err); 
-          return; 
-        } 
-
-        roles = rows; 
-        for (let i = 0; i < rows.length; i++) { 
-          roleChoices.push(rows[i].title); 
-        } 
-       // console.log(departmentChoices);
-      });  
+        employeeChoices.push(rows[i].name);
+        roleChoices.push(rows[i].title);  
+      }   
+        console.log('employeeChoices:', employeeChoices); 
+    console.log('roleChoices:', roleChoices);
         inquirer.prompt([
           {
             type: 'list',
@@ -380,7 +368,7 @@ function init() {
           let roleId;
         let managerId; 
         let employeeId; 
-
+console.log('employees:', employees);
         employees.forEach((employee) => { 
 
 
@@ -391,12 +379,11 @@ function init() {
           if (employee.name === answers.manager_id) {
             managerId = employee.id; 
           }
-        });
-        roles.forEach((role) => {
-          if (role.title === answers.role_id) {
-            roleId = role.id;
+          if (employee.title === answers.role_id) {
+            roleId = employee.role_id;
           }
         });
+        
           const sql = `UPDATE employees SET role_id = ?, manager_id = ? WHERE id = ?`; 
           const params = [roleId, managerId, employeeId]; 
           db.query(sql, params, (err, result) => {
@@ -408,9 +395,113 @@ function init() {
             init();
           });
         });
+      });
+    }
       
 
-    }
+    
+
+
+    function updateEmployeess(){ 
+
+      db.query('SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS Name, role.title, role_id FROM employees LEFT JOIN role ON role_id = role.id', function (err, result) {
+          if (err) {
+            console.error('Error executing query:', err);
+            return;
+          }
+      
+          console.log(result); 
+          var role = result.map((item) => item.title);
+      
+        var roles = result.map((item) => {
+            return {
+              id: item.role_id,
+              title: item.title
+            };
+          });
+          console.log(roles); 
+          var employees = result.map((item) => {
+              return{
+                  id: item.id, 
+                  name: item.Name
+              }
+          });
+          console.log(employees); 
+           
+    
+          inquirer
+          .prompt([
+            {
+              type: 'list',
+              name: 'employee',
+              message: 'which employee do you want to update?', 
+              choices: employees
+            }, 
+            {
+              type: 'list',
+              name: 'role',
+              message: 'what is their new role?',
+              choices: role
+            }, 
+            {
+                type: 'list',
+                name: 'manager',
+                message: 'who is there manager now?',
+                choices: employees
+              }
+         
+          ]).then(function (answers) {
+              
+              let roleid 
+              let employeeid 
+              let managerid
+            console.log("answers-role:", answers.role); 
+            console.log()
+              for (var i = 0; i < roles.length; i++) { 
+                  
+                 if (answers.role === roles[i].title){
+                       roleid = roles[i].id 
+                       console.log("role_id", roleid)
+                 } 
+              } 
+    
+              for (var i = 0; i < employees.length; i++) { 
+                  
+                if (answers.employee === employees[i].name){
+                      employeeid = employees[i].id 
+                      console.log("employe:", employeeid)
+                } 
+             }  
+  
+             for (var i = 0; i < employees.length; i++) { 
+                  
+              if (answers.manager === employees[i].name){
+                    managerid = employees[i].id 
+                    console.log("manager:", managerid)
+              } 
+           } 
+    
+              db.query(
+                  'UPDATE employees SET role_id = ?, manager_id = ? WHERE employees.id = ?',
+                  [roleid, managerid, employeeid],
+                function (err, result) {
+                  if (err) {
+                    console.error('Error executing query:', err);
+                    return;
+                  }
+      
+                  console.log('Role added successfully!');
+                  init();
+                });
+              })
+            .catch(function (error) {
+              console.error('Error occurred during prompt:', error);
+            });
+          });
+      }
+  
+  
+  
 
 
 
