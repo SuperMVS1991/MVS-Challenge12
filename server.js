@@ -236,24 +236,23 @@ function init() {
     } // Add closing parenthesis and semicolon here
 
     function addEmployees() {
-      const roleChoices = []; 
-      const managerChoices = [];
-      
-      let managers;
-      let roles;
       db.query(`SELECT employees.id, CONCAT(employees.first_name, " ", employees.last_name) AS name, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employees LEFT JOIN role ON employees.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employees manager ON manager.id = employees.manager_id`, (err, rows) => {
         if (err) {
           console.log(err);
           return;
       }
+      const roleChoices = []; 
+      const managerChoices = [];
+      let managers;
+      let roles;
       managers = rows;
-      console.log('manager:', rows[0].manager);
-      console.log('managers:', managers);
-      for (let i = 0; i < rows.length; i++) {
+      for (let i = 0; i < rows.length; i++) { 
+        if (rows[i].manager) {
         managerChoices.push(rows[i].manager);
+        }
       }
-      });
-    console.log(roleChoices, managerChoices, 'role and manager choices');
+      
+    console.log('data', managers);
     console.log('managerChoices:', managerChoices);
 
       db.query(`SELECT * FROM role`, (err, rows) => { 
@@ -321,6 +320,7 @@ function init() {
           init();
         });
       });
+      });
     }
 
       function updateEmployees() { 
@@ -333,14 +333,17 @@ function init() {
         
       const employeeChoices = [];
       const roleChoices = [];
-      let roles; 
+      const managerChoices = [];
       let employees;
     
       employees = rows; 
 
       for(let i = 0; i < rows.length; i++) { 
         employeeChoices.push(rows[i].name);
-        roleChoices.push(rows[i].title);  
+        roleChoices.push(rows[i].title);   
+        if (rows[i].manager) {
+        managerChoices.push(rows[i].manager);
+        }
       }   
         console.log('employeeChoices:', employeeChoices); 
     console.log('roleChoices:', roleChoices);
@@ -361,7 +364,7 @@ function init() {
             type: 'list', 
             name: 'manager_id', 
             message: 'which manager do you want to update the employee to?',
-            choices: employeeChoices
+            choices: managerChoices
           }
         ]).then((answers) => {
 
